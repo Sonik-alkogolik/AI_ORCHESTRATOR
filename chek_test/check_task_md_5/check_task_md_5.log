@@ -1,0 +1,7 @@
+[Stage 5] Runtime bugfix cycle 2026-04-07T11:20:25
+- Fixed PowerShell compatibility bugs (param placement, null-coalescing operator, if-expression style).
+- Added Windows-native runtime path: orchestrator.ps1, agents/*.ps1, step runners.
+- Fixed mock CLI cmd parsing bug causing '. was unexpected at this time.'
+- Test run:
+  powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\test_system.ps1
+  => system test passed in 2 iterations.
