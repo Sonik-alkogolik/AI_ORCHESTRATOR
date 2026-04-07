@@ -27,6 +27,11 @@ cd C:\go_learning\AI_ORCHESTRATOR
 # 2) Show current queue/status counters
 powershell -NoProfile -ExecutionPolicy Bypass -File .\orchestrator.ps1 stats
 
+# 2.1) Install required CLI tools (codex + qwen)
+powershell -NoProfile -ExecutionPolicy Bypass -File .\orchestrator.ps1 install
+# or:
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\install_cli.ps1
+
 # 3) Create a task from CLI
 powershell -NoProfile -ExecutionPolicy Bypass -File .\orchestrator.ps1 create "Build Go API with /health and /tasks"
 

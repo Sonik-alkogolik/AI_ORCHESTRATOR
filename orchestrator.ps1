@@ -53,14 +53,40 @@ function Install-NpmCommand {
   if (-not $npm) {
     throw "npm not found. Install Node.js or set $CommandName manually in config/agents.conf."
   }
+  $npmCmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
 
   Write-Host "Installing $CommandName via npm package $PackageName ..."
-  & $npm.Source install -g $PackageName
+  $installArgs = @(
+    "install", "-g", $PackageName,
+    "--fetch-retries=5",
+    "--fetch-retry-mintimeout=20000",
+    "--fetch-retry-maxtimeout=120000"
+  )
+
+  $maxAttempts = 3
+  for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+    if ($npmCmd) {
+      & $npmCmd.Source @installArgs
+    } else {
+      & $npm.Source @installArgs
+    }
+    if ($LASTEXITCODE -eq 0) { break }
+    if ($attempt -lt $maxAttempts) {
+      Write-Host "Install attempt $attempt failed for $CommandName, retrying..."
+      Start-Sleep -Seconds 3
+    }
+  }
+
   if ($LASTEXITCODE -ne 0) {
-    throw "Failed to install $CommandName from $PackageName."
+    throw "Failed to install $CommandName from $PackageName after $maxAttempts attempts."
   }
 
   Add-NpmPathToSession
+}
+
+function Install-AgentCli {
+  Install-NpmCommand -CommandName "codex" -PackageName "@openai/codex"
+  Install-NpmCommand -CommandName "qwen" -PackageName "@qwen-code/qwen-code"
 }
 
 function Test-AgentCommands {
@@ -91,6 +117,12 @@ switch ($Command) {
   }
   "stats" {
     Get-OrchestratorStats
+    break
+  }
+  "install" {
+    Install-AgentCli
+    Test-AgentCommands
+    Write-Host "CLI install complete: codex and qwen are available."
     break
   }
   default {
