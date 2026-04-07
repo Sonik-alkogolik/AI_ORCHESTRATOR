@@ -34,9 +34,47 @@ function Start-OrchestratorAgents {
   Start-Process -FilePath "powershell.exe" -ArgumentList @("-NoProfile","-ExecutionPolicy","Bypass","-File",$revPath) -WindowStyle Minimized | Out-Null
 }
 
+function Add-NpmPathToSession {
+  $npmBin = Join-Path $env:APPDATA "npm"
+  if (Test-Path $npmBin) {
+    $parts = $env:Path -split ";"
+    if ($parts -notcontains $npmBin) {
+      $env:Path = "$env:Path;$npmBin"
+    }
+  }
+}
+
+function Install-NpmCommand {
+  param(
+    [string]$CommandName,
+    [string]$PackageName
+  )
+  $npm = Get-Command npm -ErrorAction SilentlyContinue
+  if (-not $npm) {
+    throw "npm not found. Install Node.js or set $CommandName manually in config/agents.conf."
+  }
+
+  Write-Host "Installing $CommandName via npm package $PackageName ..."
+  & $npm.Source install -g $PackageName
+  if ($LASTEXITCODE -ne 0) {
+    throw "Failed to install $CommandName from $PackageName."
+  }
+
+  Add-NpmPathToSession
+}
+
 function Test-AgentCommands {
   $codexCmd = Get-CfgValue -Config $cfg -Key "CODEX_CMD" -DefaultValue "codex"
   $qwenCmd = Get-CfgValue -Config $cfg -Key "QWEN_CMD" -DefaultValue "qwen"
+  Add-NpmPathToSession
+
+  if (-not (Get-Command $codexCmd -ErrorAction SilentlyContinue) -and $codexCmd -eq "codex") {
+    Install-NpmCommand -CommandName "codex" -PackageName "@openai/codex"
+  }
+  if (-not (Get-Command $qwenCmd -ErrorAction SilentlyContinue) -and $qwenCmd -eq "qwen") {
+    Install-NpmCommand -CommandName "qwen" -PackageName "@qwen-code/qwen-code"
+  }
+
   $missing = @()
   if (-not (Get-Command $codexCmd -ErrorAction SilentlyContinue)) { $missing += "CODEX_CMD=$codexCmd" }
   if (-not (Get-Command $qwenCmd -ErrorAction SilentlyContinue)) { $missing += "QWEN_CMD=$qwenCmd" }

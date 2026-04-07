@@ -38,6 +38,8 @@ Notes:
 - In UI: press `n` to create a task, `q` to quit.
 - Reviewer uses `QWEN_CMD` from `config/agents.conf`.
 - Executor uses `CODEX_CMD` from `config/agents.conf`.
+- If `CODEX_CMD=codex` is missing, orchestrator auto-installs `@openai/codex` via npm.
+- If `QWEN_CMD=qwen` is missing, orchestrator auto-installs `@qwen-code/qwen-code` via npm.
 
 Optional cleanup:
 ```powershell
